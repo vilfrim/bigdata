@@ -1,0 +1,119 @@
+<html>
+
+<head>
+    <meta charset="UTF-8">
+</head>
+
+<body>
+    <h1>Ruuvitag measurements</h1>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.4.0/Chart.min.js"></script>
+
+    <canvas id="myLineChart" width="740" height="200"></canvas>
+
+    <script>
+        function drawLineChart() {
+
+            // Add a helper to format timestamp data
+            Date.prototype.formatDDMMHHmm = function () {
+                return this.getDate()+"."+( this.getMonth() + 1) + " "+this.getHours()+":"+this.getMinutes()
+            }
+            var colors = {
+                "living_room": {
+                    "temperature":"rgba(0,0,187,0.2)",
+                    "humidity":"rgba(0,0,187,0.2)"
+                },
+                "bedroom":{
+                    "temperature":"rgba(255,0,0,0.2)",
+                    "humidity":"rgba(255,0,0,0.2)"
+                }
+            }
+            var jsonData = $.ajax({
+                url: 'http://localhost:4000/measurement',
+                dataType: 'json',
+            }).done(function (results) {
+                // Split timestamp and data into separate arrays
+                var datasets = [];
+                var labels = [];
+                results.forEach(function (sensor) {
+                    temperatureData = []
+                    humidityData = []
+                    sensor.measurements.forEach(function (measurement) {
+                        temperatureData.push(parseFloat(measurement.temperature));
+                        humidityData.push(parseFloat(measurement.humidity));
+                        labels.push(new Date(measurement.time).formatDDMMHHmm())
+                    })
+                    temperatureDataset = {
+                        label: sensor.sensor_id+"_"+"temperature (celcius)",
+                        fill: false,
+                        backgroundColor: colors[sensor.sensor_id].temperature,
+                        borderColor: colors[sensor.sensor_id].temperature,
+                        data: temperatureData
+                    }
+                    humidityDataset = {
+                        label: sensor.sensor_id+"_"+"humidity (%)",
+                        fill: false,
+                        backgroundColor: colors[sensor.sensor_id].humidity,
+                        borderColor: colors[sensor.sensor_id].humidity,
+                        data: humidityData
+                    }
+                    datasets.push(temperatureDataset);
+                    datasets.push(humidityDataset);
+                });
+
+                // Get the context of the canvas element we want to select
+                var ctx = document.getElementById("myLineChart").getContext("2d");
+                console.log("datasets", JSON.stringify(datasets));
+                console.log("labels", JSON.stringify(labels));
+                // Instantiate a new chart
+                var myLineChart = new Chart(ctx,
+                    {
+                        type: 'line',
+                        data: {
+                            labels: labels,
+                            datasets: datasets,
+                            //bezierCurve: false
+                            options: {
+                                responsive: true,
+                                title: {
+                                    display: true,
+                                    text: 'Chart.js Line Chart'
+                                },
+                                tooltips: {
+                                    mode: 'index',
+                                    intersect: false,
+                                },
+                                hover: {
+                                    mode: 'nearest',
+                                    intersect: true
+                                },
+                                scales: {
+                                    xAxes: [{
+                                        display: true,
+                                        scaleLabel: {
+                                            display: true,
+                                            labelString: 'Month'
+                                        }
+                                    }],
+                                    yAxes: [{
+                                        display: true,
+                                        scaleLabel: {
+                                            display: true,
+                                            labelString: 'Value'
+                                        },
+                                        ticks: {
+                                            suggestedMin: 0,
+                                        }
+                                    }]
+                                }
+                            }
+                        }
+                    });
+            });
+        }
+
+        drawLineChart();
+    </script>
+</body>
+
+</html>

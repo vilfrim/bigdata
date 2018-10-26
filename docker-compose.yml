@@ -1,0 +1,46 @@
+
+version: '3.6'
+services:
+  database:
+    build: ./database/
+    ports:
+      - 3306:3306
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: password
+  write_endpoint:
+    environment: 
+      - DB_USER=writer
+      - DB_PASSWORD=password
+      - DB_DATABASE=project
+      - DB_HOST=database
+      - APP_PORT=8000
+    build: ./write_endpoint/
+    volumes:
+      - ./write_endpoint/:/home/endpoint
+    ports: 
+      - 8000:8000
+    depends_on: 
+      - database
+  read_endpoint:
+    environment: 
+      - DB_USER=reader
+      - DB_PASSWORD=password
+      - DB_DATABASE=project
+      - DB_HOST=database
+      - APP_PORT=4000
+    build: ./read_endpoint/
+    volumes:
+      - ./read_endpoint/:/home/endpoint
+    ports: 
+      - 4000:4000
+    depends_on: 
+      - database
+  web:
+    image: nginx
+    volumes:
+      - ./web/:/usr/share/nginx/html
+    ports:
+      - "2000:80"
+    depends_on: 
+      - read_endpoint
