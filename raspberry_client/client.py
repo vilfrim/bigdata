@@ -40,7 +40,7 @@ class RuuvitagMeasurementCollector:
 
     def start_collection(self):
 
-       print "starting to collect data"
+       print("starting to collect data")
        collected_data = RuuviTagSensor.get_data_for_sensors(self.macs, self.timeout_in_sec)
        self.handle_data(collected_data)
 
